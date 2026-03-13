@@ -1,0 +1,25 @@
+{
+  "name": "studygraph",
+  "version": "1.0.0",
+  "description": "Visual learning maps for smarter studying.",
+  "private": false,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "start": "node scripts/dev.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "keywords": [
+    "studygraph",
+    "graph",
+    "learning",
+    "education",
+    "roadmap",
+    "portfolio-project"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

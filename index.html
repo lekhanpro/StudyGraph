@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StudyGraph</title>
+    <link rel="stylesheet" href="./src/styles/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-mark">SG</div>
+          <div>
+            <p class="eyebrow">Visual learning maps for smarter studying</p>
+            <h1>StudyGraph</h1>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="ghost-button" id="export-button" type="button">Export JSON</button>
+          <button class="ghost-button" id="reset-button" type="button">Reset Demo</button>
+          <button class="primary-button" id="dependency-button" type="button">Add Dependency</button>
+          <button class="primary-button" id="topic-button" type="button">Add Topic</button>
+        </div>
+      </header>
+
+      <main class="workspace-grid">
+        <aside class="panel panel-left">
+          <section class="panel-card panel-card-tight">
+            <div class="section-heading">
+              <span>Search</span>
+            </div>
+            <label class="field-shell">
+              <span class="field-label">Topic name or description</span>
+              <input id="search-input" type="search" placeholder="Find recursion, arrays, ML..." />
+            </label>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Filters</span>
+              <button class="text-button" id="clear-filters-button" type="button">Clear</button>
+            </div>
+
+            <div class="filter-group">
+              <p class="filter-label">Category</p>
+              <div id="category-filters" class="chip-row"></div>
+            </div>
+
+            <div class="filter-group">
+              <p class="filter-label">Status</p>
+              <div id="status-filters" class="chip-row"></div>
+            </div>
+
+            <div class="filter-group">
+              <p class="filter-label">Difficulty</p>
+              <div class="select-shell">
+                <select id="difficulty-filter">
+                  <option value="all">All levels</option>
+                  <option value="easy">Easy (1-2)</option>
+                  <option value="medium">Medium (3)</option>
+                  <option value="hard">Hard (4-5)</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Study Queue</span>
+            </div>
+            <div id="queue-panel" class="stack-list"></div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Legend</span>
+            </div>
+            <div class="legend-list">
+              <div class="legend-item"><span class="legend-swatch locked"></span><span>Locked</span></div>
+              <div class="legend-item"><span class="legend-swatch unlocked"></span><span>Unlocked</span></div>
+              <div class="legend-item"><span class="legend-swatch progress"></span><span>In progress</span></div>
+              <div class="legend-item"><span class="legend-swatch mastered"></span><span>Mastered</span></div>
+              <div class="legend-item"><span class="legend-swatch recommended"></span><span>Recommended</span></div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="main-stage">
+          <section class="stats-grid" id="stats-grid"></section>
+
+          <section class="canvas-panel">
+            <div class="canvas-header">
+              <div>
+                <p class="eyebrow">Graph View</p>
+                <h2>Learning roadmap</h2>
+              </div>
+              <div class="canvas-meta">
+                <span id="visible-count-badge" class="status-pill">0 visible</span>
+                <span class="status-pill subtle">Drag nodes to reorganize your map</span>
+              </div>
+            </div>
+
+            <div class="canvas-scroll">
+              <div id="graph-stage" class="graph-stage">
+                <svg id="graph-edges" class="graph-edges" aria-hidden="true"></svg>
+                <div id="graph-nodes" class="graph-nodes"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="analytics-grid">
+            <article class="panel-card analytics-card">
+              <div class="section-heading">
+                <span>Category Progress</span>
+              </div>
+              <div id="category-progress" class="stack-list"></div>
+            </article>
+
+            <article class="panel-card analytics-card">
+              <div class="section-heading">
+                <span>Roadmap Signals</span>
+              </div>
+              <div id="signals-panel" class="stack-list"></div>
+            </article>
+          </section>
+        </section>
+
+        <aside class="panel panel-right">
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Recommendation</span>
+            </div>
+            <div id="recommendation-panel" class="stack-list"></div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Topic Details</span>
+            </div>
+            <div id="detail-panel" class="detail-panel"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <dialog id="topic-dialog" class="modal-shell">
+      <form id="topic-form" class="modal-card" method="dialog">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Topic Editor</p>
+            <h3 id="topic-dialog-title">Add topic</h3>
+          </div>
+          <button class="icon-button" id="close-topic-dialog" type="button" aria-label="Close topic editor">x</button>
+        </div>
+
+        <input id="topic-id" name="topicId" type="hidden" />
+
+        <div class="form-grid">
+          <label class="field-shell field-span-2">
+            <span class="field-label">Title</span>
+            <input id="topic-title" name="title" type="text" maxlength="60" required />
+          </label>
+
+          <label class="field-shell field-span-2">
+            <span class="field-label">Description</span>
+            <textarea id="topic-description" name="description" rows="3" maxlength="220"></textarea>
+          </label>
+
+          <label class="field-shell">
+            <span class="field-label">Category</span>
+            <select id="topic-category" name="category"></select>
+          </label>
+
+          <label class="field-shell">
+            <span class="field-label">Difficulty</span>
+            <select id="topic-difficulty" name="difficulty">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+
+          <label class="field-shell">
+            <span class="field-label">Estimated hours</span>
+            <input id="topic-hours" name="estimatedHours" type="number" min="1" max="40" required />
+          </label>
+
+          <label class="field-shell">
+            <span class="field-label">Mastery %</span>
+            <input id="topic-mastery" name="mastery" type="number" min="0" max="100" step="5" required />
+          </label>
+        </div>
+
+        <div class="modal-actions">
+          <button class="ghost-button" id="cancel-topic-button" type="button">Cancel</button>
+          <button class="primary-button" type="submit">Save Topic</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dependency-dialog" class="modal-shell">
+      <form id="dependency-form" class="modal-card" method="dialog">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">Prerequisite Link</p>
+            <h3>Create dependency</h3>
+          </div>
+          <button class="icon-button" id="close-dependency-dialog" type="button" aria-label="Close dependency editor">x</button>
+        </div>
+
+        <div class="form-grid">
+          <label class="field-shell field-span-2">
+            <span class="field-label">Prerequisite topic</span>
+            <select id="dependency-from" name="from"></select>
+          </label>
+
+          <label class="field-shell field-span-2">
+            <span class="field-label">Unlocked topic</span>
+            <select id="dependency-to" name="to"></select>
+          </label>
+        </div>
+
+        <p class="helper-copy">Example: Arrays -> Dynamic Programming means Dynamic Programming depends on Arrays.</p>
+
+        <div class="modal-actions">
+          <button class="ghost-button" id="cancel-dependency-button" type="button">Cancel</button>
+          <button class="primary-button" type="submit">Create Link</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./src/js/graph-engine.js"></script>
+    <script src="./src/js/app-state.js"></script>
+    <script src="./src/js/app-render.js"></script>
+    <script src="./src/js/app.js"></script>
+  </body>
+</html>
+
+
