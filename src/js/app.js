@@ -17,6 +17,8 @@
       simulationValue: document.getElementById('simulation-value'),
       searchInput: document.getElementById('search-input'),
       templatePanel: document.getElementById('template-panel'),
+      analyticsTabs: document.getElementById('analytics-tabs'),
+      inspectorTabs: document.getElementById('inspector-tabs'),
       categoryFilters: document.getElementById('category-filters'),
       statusFilters: document.getElementById('status-filters'),
       difficultyFilter: document.getElementById('difficulty-filter'),
@@ -160,6 +162,20 @@
     const button = event.target.closest('[data-focus-recommendation]');
     if (!button || !state.analysis || !state.analysis.recommendation) return;
     handleTopicSelection(state.analysis.recommendation.id);
+  }
+
+  function handleAnalyticsTabClick(event) {
+    const button = event.target.closest('[data-analytics-view]');
+    if (!button) return;
+    app.setAnalyticsView(button.dataset.analyticsView);
+    app.renderAll();
+  }
+
+  function handleInspectorTabClick(event) {
+    const button = event.target.closest('[data-inspector-view]');
+    if (!button) return;
+    app.setInspectorView(button.dataset.inspectorView);
+    app.renderAll();
   }
 
   async function handleImportChange(event) {
@@ -336,6 +352,8 @@
     state.elements.simulationPanel.addEventListener('click', handlePanelTopicSelect);
     state.elements.templatePanel.addEventListener('click', handleTemplateSelect);
     state.elements.heroPanel.addEventListener('click', handleHeroClick);
+    state.elements.analyticsTabs.addEventListener('click', handleAnalyticsTabClick);
+    state.elements.inspectorTabs.addEventListener('click', handleInspectorTabClick);
     window.addEventListener('keydown', handleKeyboardShortcuts);
   }
 

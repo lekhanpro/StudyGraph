@@ -25,21 +25,60 @@
           <input id="import-input" type="file" accept="application/json" hidden />
           <button class="ghost-button" id="export-button" type="button">Export JSON</button>
           <button class="ghost-button" id="reset-button" type="button">Reset Demo</button>
-          <button class="primary-button" id="dependency-button" type="button">Add Dependency</button>
+          <button class="ghost-button" id="dependency-button" type="button">Add Dependency</button>
           <button class="primary-button" id="topic-button" type="button">Add Topic</button>
         </div>
       </header>
 
       <main class="workspace-grid">
         <aside class="panel panel-left">
-          <section class="panel-card panel-card-tight">
+          <section class="panel-card panel-card-tight controls-card">
             <div class="section-heading">
-              <span>Search</span>
+              <span>Controls</span>
+              <button class="text-button" id="clear-filters-button" type="button">Clear</button>
             </div>
-            <label class="field-shell">
-              <span class="field-label">Topic name or description</span>
-              <input id="search-input" type="search" placeholder="Find recursion, arrays, ML..." />
-            </label>
+
+            <div class="control-block">
+              <label class="field-shell">
+                <span class="field-label">Topic name or description</span>
+                <input id="search-input" type="search" placeholder="Find recursion, arrays, ML..." />
+              </label>
+            </div>
+
+            <div class="control-block">
+              <div class="filter-group">
+                <p class="filter-label">Category</p>
+                <div id="category-filters" class="chip-row"></div>
+              </div>
+
+              <div class="filter-group">
+                <p class="filter-label">Status</p>
+                <div id="status-filters" class="chip-row"></div>
+              </div>
+
+              <div class="filter-group">
+                <p class="filter-label">Difficulty</p>
+                <div class="select-shell">
+                  <select id="difficulty-filter">
+                    <option value="all">All levels</option>
+                    <option value="easy">Easy (1-2)</option>
+                    <option value="medium">Medium (3)</option>
+                    <option value="hard">Hard (4-5)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <div class="range-shell">
+                <div class="range-meta">
+                  <span class="micro-copy">Weekly study hours</span>
+                  <span class="range-value" id="weekly-hours-value">10h</span>
+                </div>
+                <input id="weekly-hours-input" type="range" min="4" max="24" step="1" value="10" />
+                <p class="helper-copy">Adjust planner density without opening a separate settings area.</p>
+              </div>
+            </div>
           </section>
 
           <section class="panel-card">
@@ -48,73 +87,10 @@
             </div>
             <div id="template-panel" class="template-grid"></div>
           </section>
-
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>Filters</span>
-              <button class="text-button" id="clear-filters-button" type="button">Clear</button>
-            </div>
-
-            <div class="filter-group">
-              <p class="filter-label">Category</p>
-              <div id="category-filters" class="chip-row"></div>
-            </div>
-
-            <div class="filter-group">
-              <p class="filter-label">Status</p>
-              <div id="status-filters" class="chip-row"></div>
-            </div>
-
-            <div class="filter-group">
-              <p class="filter-label">Difficulty</p>
-              <div class="select-shell">
-                <select id="difficulty-filter">
-                  <option value="all">All levels</option>
-                  <option value="easy">Easy (1-2)</option>
-                  <option value="medium">Medium (3)</option>
-                  <option value="hard">Hard (4-5)</option>
-                </select>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>Sprint Settings</span>
-            </div>
-            <div class="range-shell">
-              <div class="range-meta">
-                <span class="micro-copy">Weekly study hours</span>
-                <span class="range-value" id="weekly-hours-value">10h</span>
-              </div>
-              <input id="weekly-hours-input" type="range" min="4" max="24" step="1" value="10" />
-              <p class="helper-copy">The planner distributes the highest-value unlocked topics across a 5-day study sprint.</p>
-            </div>
-          </section>
-
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>Study Queue</span>
-            </div>
-            <div id="queue-panel" class="stack-list"></div>
-          </section>
-
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>Legend</span>
-            </div>
-            <div class="legend-list">
-              <div class="legend-item"><span class="legend-swatch locked"></span><span>Locked</span></div>
-              <div class="legend-item"><span class="legend-swatch unlocked"></span><span>Unlocked</span></div>
-              <div class="legend-item"><span class="legend-swatch progress"></span><span>In progress</span></div>
-              <div class="legend-item"><span class="legend-swatch mastered"></span><span>Mastered</span></div>
-              <div class="legend-item"><span class="legend-swatch recommended"></span><span>Recommended</span></div>
-            </div>
-          </section>
         </aside>
 
         <section class="main-stage">
-                    <section id="hero-panel" class="hero-panel"></section>
+          <section id="hero-panel" class="hero-panel"></section>
 
           <section class="stats-grid" id="stats-grid"></section>
 
@@ -126,8 +102,7 @@
               </div>
               <div class="canvas-meta">
                 <span id="visible-count-badge" class="status-pill">0 visible</span>
-                <span class="status-pill subtle">Drag nodes to reorganize your map</span>
-                <span class="status-pill subtle">Shortcuts: / search, N topic, D dependency, F focus</span>
+                <span class="status-pill subtle">Click to inspect, drag to rearrange</span>
               </div>
             </div>
 
@@ -139,57 +114,63 @@
             </div>
           </section>
 
-          <section class="analytics-grid analytics-grid-wide">
-            <article class="panel-card analytics-card">
-              <div class="section-heading">
-                <span>Category Progress</span>
+          <section class="panel-card analytics-shell">
+            <div class="section-heading">
+              <span>Insights</span>
+              <div class="panel-tabs" id="analytics-tabs">
+                <button class="tab-button" type="button" data-analytics-view="progress">Progress</button>
+                <button class="tab-button" type="button" data-analytics-view="signals">Signals</button>
+                <button class="tab-button" type="button" data-analytics-view="sprint">Sprint</button>
               </div>
+            </div>
+
+            <section class="tab-panel" data-analytics-panel="progress">
               <div id="category-progress" class="stack-list"></div>
-            </article>
+            </section>
 
-            <article class="panel-card analytics-card">
-              <div class="section-heading">
-                <span>Roadmap Signals</span>
-              </div>
+            <section class="tab-panel" data-analytics-panel="signals" hidden>
               <div id="signals-panel" class="stack-list"></div>
-            </article>
+            </section>
 
-            <article class="panel-card analytics-card">
-              <div class="section-heading">
-                <span>5-Day Sprint Planner</span>
-              </div>
-              <div id="sprint-panel" class="stack-list"></div>
-            </article>
+            <section class="tab-panel" data-analytics-panel="sprint" hidden>
+              <div id="sprint-panel"></div>
+            </section>
           </section>
         </section>
 
         <aside class="panel panel-right">
-          <section class="panel-card">
+          <section class="panel-card inspector-shell">
             <div class="section-heading">
-              <span>Recommendation</span>
-            </div>
-            <div id="recommendation-panel" class="stack-list"></div>
-          </section>
-
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>What-If Lab</span>
-            </div>
-            <div class="range-shell">
-              <div class="range-meta">
-                <span class="micro-copy">Projected mastery for selected topic</span>
-                <span class="range-value" id="simulation-value">0%</span>
+              <span>Inspector</span>
+              <div class="panel-tabs" id="inspector-tabs">
+                <button class="tab-button" type="button" data-inspector-view="focus">Focus</button>
+                <button class="tab-button" type="button" data-inspector-view="details">Details</button>
+                <button class="tab-button" type="button" data-inspector-view="simulate">Simulate</button>
               </div>
-              <input id="simulation-slider" type="range" min="0" max="100" step="5" value="0" />
             </div>
-            <div id="simulation-panel" class="stack-list"></div>
-          </section>
 
-          <section class="panel-card">
-            <div class="section-heading">
-              <span>Topic Details</span>
-            </div>
-            <div id="detail-panel" class="detail-panel"></div>
+            <section class="tab-panel inspector-panel" data-inspector-panel="focus">
+              <div id="recommendation-panel" class="stack-list"></div>
+              <div class="subsection-divider">
+                <span>Queue</span>
+              </div>
+              <div id="queue-panel" class="stack-list compact-stack"></div>
+            </section>
+
+            <section class="tab-panel inspector-panel" data-inspector-panel="details" hidden>
+              <div id="detail-panel" class="detail-panel"></div>
+            </section>
+
+            <section class="tab-panel inspector-panel" data-inspector-panel="simulate" hidden>
+              <div class="range-shell">
+                <div class="range-meta">
+                  <span class="micro-copy">Projected mastery for selected topic</span>
+                  <span class="range-value" id="simulation-value">0%</span>
+                </div>
+                <input id="simulation-slider" type="range" min="0" max="100" step="5" value="0" />
+              </div>
+              <div id="simulation-panel" class="stack-list"></div>
+            </section>
           </section>
         </aside>
       </main>
@@ -289,13 +270,3 @@
     <script src="./src/js/app.js"></script>
   </body>
 </html>
-
-
-
-
-
-
-
-
-
-

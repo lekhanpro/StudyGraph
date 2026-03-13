@@ -115,7 +115,13 @@
     analysis: null,
     drag: null,
     elements: {},
-    ui: { activeTemplate: "cs-core", weeklyHours: 10, simulationMastery: 0 }
+    ui: {
+      activeTemplate: "cs-core",
+      weeklyHours: 10,
+      simulationMastery: 0,
+      activeAnalyticsView: "progress",
+      activeInspectorView: "focus"
+    }
   };
 
   function clone(value) {
@@ -169,13 +175,25 @@
       state.topics = Array.isArray(parsed.topics) ? parsed.topics : fallbackGraph.topics;
       state.edges = Array.isArray(parsed.edges) ? parsed.edges : fallbackGraph.edges;
       state.selectedTopicId = parsed.selectedTopicId || (state.topics[0] && state.topics[0].id) || null;
-      state.ui = Object.assign({ activeTemplate: templateKey, weeklyHours: 10, simulationMastery: 0 }, parsed.ui || {});
+      state.ui = Object.assign({
+        activeTemplate: templateKey,
+        weeklyHours: 10,
+        simulationMastery: 0,
+        activeAnalyticsView: "progress",
+        activeInspectorView: "focus"
+      }, parsed.ui || {});
     } catch (error) {
       const fallbackGraph = clone(defaultGraph);
       state.topics = fallbackGraph.topics;
       state.edges = fallbackGraph.edges;
       state.selectedTopicId = state.topics[0] ? state.topics[0].id : null;
-      state.ui = { activeTemplate: "cs-core", weeklyHours: 10, simulationMastery: 0 };
+      state.ui = {
+        activeTemplate: "cs-core",
+        weeklyHours: 10,
+        simulationMastery: 0,
+        activeAnalyticsView: "progress",
+        activeInspectorView: "focus"
+      };
     }
   }
 
@@ -193,6 +211,7 @@
     const topic = state.topics.find(function (item) { return item.id === topicId; });
     if (topic) {
       state.ui.simulationMastery = topic.mastery;
+      state.ui.activeInspectorView = "details";
     }
   }
 
@@ -363,6 +382,19 @@
     state.ui.simulationMastery = clamp(Number(value), 0, 100);
   }
 
+  function setAnalyticsView(view) {
+    const allowedViews = { progress: true, signals: true, sprint: true };
+    if (!allowedViews[view]) return;
+    state.ui.activeAnalyticsView = view;
+    saveState();
+  }
+
+  function setInspectorView(view) {
+    const allowedViews = { focus: true, details: true, simulate: true };
+    if (!allowedViews[view]) return;
+    state.ui.activeInspectorView = view;
+    saveState();
+  }
   function getRoadmapEntries() {
     return Object.keys(roadmapLibrary).map(function (key) {
       const roadmap = roadmapLibrary[key];
@@ -386,6 +418,7 @@
     state.selectedTopicId = nextGraph.topics[0] ? nextGraph.topics[0].id : null;
     state.ui.activeTemplate = key;
     state.ui.simulationMastery = nextGraph.topics[0] ? nextGraph.topics[0].mastery : 0;
+    state.ui.activeInspectorView = "focus";
     state.cycleAlert = null;
     saveState();
   }
@@ -525,6 +558,8 @@
     importGraphText: importGraphText,
     setWeeklyHours: setWeeklyHours,
     setSimulationMastery: setSimulationMastery,
+    setAnalyticsView: setAnalyticsView,
+    setInspectorView: setInspectorView,
     getRoadmapEntries: getRoadmapEntries,
     loadTemplate: loadTemplate,
     getSprintPlan: getSprintPlan,
@@ -533,3 +568,4 @@
     resetDemo: resetDemo
   };
 })();
+

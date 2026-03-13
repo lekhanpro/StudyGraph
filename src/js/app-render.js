@@ -5,14 +5,13 @@
     return '<article class="empty-card"><p class="empty-copy">' + app.escapeHtml(copy) + '</p></article>';
   }
 
-  function buildQueueCard(label, topicId, title, copy) {
+  function buildQueueItem(label, topicId, title, copy) {
     return [
-      '<article class="queue-card">',
-      '<p class="eyebrow">' + app.escapeHtml(label) + '</p>',
-      '<h3 class="queue-title">' + app.escapeHtml(title) + '</h3>',
-      '<p class="queue-copy">' + app.escapeHtml(copy) + '</p>',
-      '<button class="ghost-button" type="button" data-topic-select="' + topicId + '">Open topic</button>',
-      '</article>'
+      '<button class="queue-item" type="button" data-topic-select="' + topicId + '">',
+      '<span class="queue-item-label">' + app.escapeHtml(label) + '</span>',
+      '<strong class="queue-item-title">' + app.escapeHtml(title) + '</strong>',
+      '<span class="queue-item-copy">' + app.escapeHtml(copy) + '</span>',
+      '</button>'
     ].join('');
   }
 
@@ -66,24 +65,24 @@
     const hero = app.getHeroMetrics();
     const recommendation = hero.recommendation;
     const recommendationMarkup = recommendation
-      ? '<div class="hero-spotlight"><p class="eyebrow">Best Next Move</p><h2>' + app.escapeHtml(recommendation.title) + '</h2><p class="queue-copy">Score ' + recommendation.score + ' with a weekly plan tuned for ' + hero.weeklyHours + ' study hours.</p><button class="primary-button" type="button" data-focus-recommendation>Focus Recommendation</button></div>'
-      : '<div class="hero-spotlight"><p class="eyebrow">Best Next Move</p><h2>Nothing unlocked yet</h2><p class="queue-copy">Raise prerequisite mastery to unlock the next study candidates.</p></div>';
+      ? '<article class="hero-spotlight"><p class="eyebrow">Best Next Move</p><h2>' + app.escapeHtml(recommendation.title) + '</h2><p class="queue-copy">Unlocked, balanced for your current graph, and worth ' + recommendation.score + ' points right now.</p><button class="primary-button" type="button" data-focus-recommendation>Open Recommendation</button></article>'
+      : '<article class="hero-spotlight"><p class="eyebrow">Best Next Move</p><h2>Nothing unlocked yet</h2><p class="queue-copy">Raise prerequisite mastery to surface a clear next topic.</p></article>';
 
     app.state.elements.heroPanel.innerHTML = [
       '<div class="hero-copy">',
-      '<p class="eyebrow">Advanced study OS</p>',
-      '<h2>Plan roadmaps, simulate unlocks, and turn your graph into a weekly sprint.</h2>',
+      '<p class="eyebrow">Study Flow</p>',
+      '<h2>A cleaner roadmap with one obvious next step.</h2>',
       '<p class="queue-copy">' + app.escapeHtml(hero.activeRoadmap.description) + '</p>',
       '<div class="hero-pill-row">',
       '<span class="status-pill">Blueprint: ' + app.escapeHtml(hero.activeRoadmap.label) + '</span>',
       '<span class="status-pill subtle">' + hero.totalEdges + ' prerequisite links</span>',
       '<span class="status-pill subtle">' + hero.weeklyHours + 'h sprint capacity</span>',
       '</div>',
+      '<div class="hero-stat-strip">',
+      '<article class="hero-stat"><span class="hero-metric-label">Readiness</span><strong class="hero-inline-value">' + hero.readiness + '%</strong></article>',
+      '<article class="hero-stat"><span class="hero-metric-label">Momentum</span><strong class="hero-inline-value">' + hero.momentum + '%</strong></article>',
+      '<article class="hero-stat"><span class="hero-metric-label">Blockers</span><strong class="hero-inline-value">' + hero.blockerLoad + '%</strong></article>',
       '</div>',
-      '<div class="hero-grid">',
-      '<article class="hero-metric-card"><span class="hero-metric-label">Readiness</span><strong class="hero-metric-value">' + hero.readiness + '%</strong><span class="hero-metric-copy">How ready this roadmap is for forward progress right now.</span></article>',
-      '<article class="hero-metric-card"><span class="hero-metric-label">Momentum</span><strong class="hero-metric-value">' + hero.momentum + '%</strong><span class="hero-metric-copy">Portion of topics already in progress or fully mastered.</span></article>',
-      '<article class="hero-metric-card"><span class="hero-metric-label">Blocker Load</span><strong class="hero-metric-value">' + hero.blockerLoad + '%</strong><span class="hero-metric-copy">How much of the roadmap is still gated by prerequisites.</span></article>',
       '</div>',
       recommendationMarkup
     ].join('');
@@ -93,10 +92,9 @@
     const stats = app.state.analysis.stats;
     const recommendation = app.state.analysis.recommendation;
     const cards = [
-      { label: 'Total topics', value: stats.totalTopics, trend: stats.masteredTopics + ' mastered' },
-      { label: 'Average mastery', value: stats.averageMastery + '%', trend: stats.inProgressTopics + ' currently active' },
-      { label: 'Unlocked now', value: stats.unlockedTopics, trend: recommendation ? 'Next best: ' + recommendation.title : 'No topic currently unlocked' },
-      { label: 'Blocked topics', value: stats.blockedTopics, trend: app.state.analysis.roots.length + ' root topics' }
+      { label: 'Available now', value: stats.unlockedTopics, trend: recommendation ? 'Next: ' + recommendation.title : 'No unlocked topic yet' },
+      { label: 'Average mastery', value: stats.averageMastery + '%', trend: stats.inProgressTopics + ' active topics' },
+      { label: 'Blocked', value: stats.blockedTopics, trend: stats.masteredTopics + ' mastered already' }
     ];
 
     app.state.elements.statsGrid.innerHTML = cards.map(function (card) {
@@ -176,15 +174,19 @@
     const blocked = app.state.analysis.topics.filter(function (topic) {
       return app.state.analysis.metaById[topic.id].state === 'locked';
     });
+    const recommendationId = app.state.analysis.recommendation ? app.state.analysis.recommendation.id : null;
+    const queueItems = [];
 
-    app.state.elements.queuePanel.innerHTML = [
-      app.state.analysis.recommendation ? buildQueueCard('Focus next', app.state.analysis.recommendation.id, app.state.analysis.recommendation.title, 'Highest score in the current unlock set.') : buildEmptyCard('No topics are currently unlocked.'),
-      unlocked.length ? unlocked.slice(0, 4).map(function (topic) {
-        const meta = app.state.analysis.metaById[topic.id];
-        return buildQueueCard('Ready now', topic.id, topic.title, meta.state === 'in-progress' ? 'Already underway.' : 'All prerequisites are satisfied.');
-      }).join('') : buildEmptyCard('Nothing is studyable until more prerequisites are completed.'),
-      blocked[0] ? buildQueueCard('Blocked', blocked[0].id, blocked[0].title, 'Still waiting on ' + app.topicNameList(app.state.analysis.metaById[blocked[0].id].blockedBy) + '.') : ''
-    ].join('');
+    unlocked.filter(function (topic) { return topic.id !== recommendationId; }).slice(0, 3).forEach(function (topic) {
+      const meta = app.state.analysis.metaById[topic.id];
+      queueItems.push(buildQueueItem(meta.state === 'in-progress' ? 'In progress' : 'Ready now', topic.id, topic.title, meta.state === 'in-progress' ? 'Already underway.' : 'All prerequisites are satisfied.'));
+    });
+
+    if (blocked[0]) {
+      queueItems.push(buildQueueItem('Blocked', blocked[0].id, blocked[0].title, 'Waiting on ' + app.topicNameList(app.state.analysis.metaById[blocked[0].id].blockedBy) + '.'));
+    }
+
+    app.state.elements.queuePanel.innerHTML = queueItems.length ? '<div class="queue-list">' + queueItems.join('') + '</div>' : buildEmptyCard('Nothing else is ready after the current recommendation.');
   }
 
   function renderRecommendations() {
@@ -193,11 +195,27 @@
       app.state.elements.recommendationPanel.innerHTML = buildEmptyCard('Complete prerequisite topics to unlock recommendations.');
       return;
     }
-    app.state.elements.recommendationPanel.innerHTML = app.state.analysis.recommendations.slice(0, 4).map(function (entry, index) {
-      const topic = app.state.analysis.indexes.topicById[entry.id];
-      const reasons = entry.reasons.slice(0, 3).map(function (reason) { return '<span class="detail-tag">' + app.escapeHtml(reason) + '</span>'; }).join('');
-      return '<article class="recommendation-card"><div class="recommendation-score">Rank ' + (index + 1) + ' | Score ' + entry.score + '</div><h3 class="queue-title">' + app.escapeHtml(topic.title) + '</h3><p class="queue-copy">' + app.escapeHtml(topic.description) + '</p><div class="queue-tag-row">' + reasons + '</div><button class="ghost-button" type="button" data-topic-select="' + entry.id + '">Inspect topic</button></article>';
+
+    const lead = app.state.analysis.recommendations[0];
+    const leadTopic = app.state.analysis.indexes.topicById[lead.id];
+    const leadReasons = lead.reasons.slice(0, 3).map(function (reason) {
+      return '<span class="detail-tag">' + app.escapeHtml(reason) + '</span>';
     }).join('');
+    const alternates = app.state.analysis.recommendations.slice(1, 3).map(function (entry) {
+      const topic = app.state.analysis.indexes.topicById[entry.id];
+      return '<button class="tag-button" type="button" data-topic-select="' + entry.id + '">' + app.escapeHtml(topic.title) + '</button>';
+    }).join('');
+
+    app.state.elements.recommendationPanel.innerHTML = [
+      '<article class="recommendation-card">',
+      '<div class="recommendation-score">Score ' + lead.score + '</div>',
+      '<h3 class="queue-title">' + app.escapeHtml(leadTopic.title) + '</h3>',
+      '<p class="queue-copy">' + app.escapeHtml(leadTopic.description) + '</p>',
+      '<div class="queue-tag-row">' + leadReasons + '</div>',
+      '<button class="primary-button" type="button" data-topic-select="' + lead.id + '">Inspect topic</button>',
+      '</article>',
+      alternates ? '<article class="compact-card"><p class="compact-label">Also viable</p><div class="detail-tag-row">' + alternates + '</div></article>' : ''
+    ].join('');
   }
 
   function renderSimulation() {
@@ -271,13 +289,11 @@
     const highImpact = analysis.topics.slice().sort(function (left, right) {
       return analysis.metaById[right.id].dependents.length - analysis.metaById[left.id].dependents.length;
     }).slice(0, 3);
-    const nearFinish = analysis.topics.filter(function (topic) { return topic.mastery >= 70 && topic.mastery < 100; }).slice(0, 3);
 
     app.state.elements.signalsPanel.innerHTML = [
       '<article class="signal-card"><h3 class="signal-title">Momentum lane</h3><p class="signal-copy">' + (inProgress.length ? inProgress.map(function (topic) { return topic.title + ' (' + topic.mastery + '%)'; }).join(', ') : 'No topics are in progress right now.') + '</p></article>',
       '<article class="signal-card"><h3 class="signal-title">Blocker pressure</h3><p class="signal-copy">' + (locked[0] ? locked[0].title + ' is blocked by ' + app.topicNameList(analysis.metaById[locked[0].id].blockedBy) + '.' : 'No blocked topics right now.') + '</p></article>',
-      '<article class="signal-card"><h3 class="signal-title">High-impact topics</h3><p class="signal-copy">' + (highImpact.length ? highImpact.map(function (topic) { return topic.title + ' (' + analysis.metaById[topic.id].dependents.length + ' downstream)'; }).join(', ') : 'No dependency impact data available.') + '</p></article>',
-      '<article class="signal-card"><h3 class="signal-title">Close to mastery</h3><p class="signal-copy">' + (nearFinish.length ? nearFinish.map(function (topic) { return topic.title + ' (' + topic.mastery + '%)'; }).join(', ') : 'No topics are close to the finish line yet.') + '</p></article>'
+      '<article class="signal-card"><h3 class="signal-title">High-impact topics</h3><p class="signal-copy">' + (highImpact.length ? highImpact.map(function (topic) { return topic.title + ' (' + analysis.metaById[topic.id].dependents.length + ' downstream)'; }).join(', ') : 'No dependency impact data available.') + '</p></article>'
     ].join('');
   }
 
@@ -294,6 +310,25 @@
     ].join('');
   }
 
+  function renderTabs() {
+    const analyticsView = app.state.ui.activeAnalyticsView || 'progress';
+    const inspectorView = app.state.ui.activeInspectorView || 'focus';
+
+    document.querySelectorAll('[data-analytics-view]').forEach(function (button) {
+      button.classList.toggle('active', button.dataset.analyticsView === analyticsView);
+    });
+    document.querySelectorAll('[data-analytics-panel]').forEach(function (panel) {
+      panel.hidden = panel.dataset.analyticsPanel !== analyticsView;
+    });
+
+    document.querySelectorAll('[data-inspector-view]').forEach(function (button) {
+      button.classList.toggle('active', button.dataset.inspectorView === inspectorView);
+    });
+    document.querySelectorAll('[data-inspector-panel]').forEach(function (panel) {
+      panel.hidden = panel.dataset.inspectorPanel !== inspectorView;
+    });
+  }
+
   function renderAll() {
     app.analyzeState();
     renderFilters();
@@ -308,6 +343,7 @@
     renderCategoryProgress();
     renderSignals();
     renderSprint();
+    renderTabs();
   }
 
   app.buildEmptyCard = buildEmptyCard;
