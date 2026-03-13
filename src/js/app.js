@@ -5,16 +5,24 @@
   function cacheElements() {
     state.elements = {
       statsGrid: document.getElementById('stats-grid'),
+      heroPanel: document.getElementById('hero-panel'),
       queuePanel: document.getElementById('queue-panel'),
       recommendationPanel: document.getElementById('recommendation-panel'),
       detailPanel: document.getElementById('detail-panel'),
       categoryProgress: document.getElementById('category-progress'),
       signalsPanel: document.getElementById('signals-panel'),
+      sprintPanel: document.getElementById('sprint-panel'),
+      simulationPanel: document.getElementById('simulation-panel'),
+      simulationSlider: document.getElementById('simulation-slider'),
+      simulationValue: document.getElementById('simulation-value'),
       searchInput: document.getElementById('search-input'),
+      templatePanel: document.getElementById('template-panel'),
       categoryFilters: document.getElementById('category-filters'),
       statusFilters: document.getElementById('status-filters'),
       difficultyFilter: document.getElementById('difficulty-filter'),
       clearFiltersButton: document.getElementById('clear-filters-button'),
+      weeklyHoursInput: document.getElementById('weekly-hours-input'),
+      weeklyHoursValue: document.getElementById('weekly-hours-value'),
       visibleCountBadge: document.getElementById('visible-count-badge'),
       canvasScroll: document.querySelector('.canvas-scroll'),
       graphStage: document.getElementById('graph-stage'),
@@ -36,6 +44,8 @@
       dependencyTo: document.getElementById('dependency-to'),
       topicButton: document.getElementById('topic-button'),
       dependencyButton: document.getElementById('dependency-button'),
+      importButton: document.getElementById('import-button'),
+      importInput: document.getElementById('import-input'),
       exportButton: document.getElementById('export-button'),
       resetButton: document.getElementById('reset-button'),
       closeTopicDialog: document.getElementById('close-topic-dialog'),
@@ -43,6 +53,13 @@
       closeDependencyDialog: document.getElementById('close-dependency-dialog'),
       cancelDependencyButton: document.getElementById('cancel-dependency-button')
     };
+  }
+
+  function syncControlValues() {
+    state.elements.weeklyHoursInput.value = String(state.ui.weeklyHours);
+    state.elements.weeklyHoursValue.textContent = state.ui.weeklyHours + 'h';
+    state.elements.simulationSlider.value = String(state.ui.simulationMastery || 0);
+    state.elements.simulationValue.textContent = (state.ui.simulationMastery || 0) + '%';
   }
 
   function openTopicDialog(topic) {
@@ -107,6 +124,7 @@
       mastery: app.clamp(Number(formData.get('mastery')), 0, 100)
     });
     closeTopicDialog();
+    syncControlValues();
     app.renderAll();
   }
 
@@ -118,11 +136,45 @@
     app.renderAll();
   }
 
+  function handleTopicSelection(topicId) {
+    app.selectTopic(topicId);
+    syncControlValues();
+    app.renderAll();
+  }
+
   function handlePanelTopicSelect(event) {
     const button = event.target.closest('[data-topic-select]');
     if (!button) return;
-    state.selectedTopicId = button.dataset.topicSelect;
+    handleTopicSelection(button.dataset.topicSelect);
+  }
+
+  function handleTemplateSelect(event) {
+    const button = event.target.closest('[data-template-key]');
+    if (!button) return;
+    app.loadTemplate(button.dataset.templateKey);
+    syncControlValues();
     app.renderAll();
+  }
+
+  function handleHeroClick(event) {
+    const button = event.target.closest('[data-focus-recommendation]');
+    if (!button || !state.analysis || !state.analysis.recommendation) return;
+    handleTopicSelection(state.analysis.recommendation.id);
+  }
+
+  async function handleImportChange(event) {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      app.importGraphText(text);
+      syncControlValues();
+      app.renderAll();
+    } catch (error) {
+      window.alert(error && error.message ? error.message : 'Failed to import roadmap JSON.');
+    } finally {
+      event.target.value = '';
+    }
   }
 
   function handleDetailClicks(event) {
@@ -135,6 +187,7 @@
       const selected = app.getSelectedTopic();
       if (selected && window.confirm('Delete "' + selected.title + '" and remove all of its prerequisite links?')) {
         app.deleteTopic(selected.id);
+        syncControlValues();
         app.renderAll();
       }
       return;
@@ -143,13 +196,13 @@
       const selectedTopic = app.getSelectedTopic();
       if (selectedTopic) {
         app.stepMastery(selectedTopic.id, Number(target.dataset.masteryStep));
+        syncControlValues();
         app.renderAll();
       }
       return;
     }
     if (target.matches('[data-focus-topic]')) {
-      state.selectedTopicId = target.dataset.focusTopic;
-      app.renderAll();
+      handleTopicSelection(target.dataset.focusTopic);
       return;
     }
     if (target.matches('[data-remove-edge]')) {
@@ -163,6 +216,7 @@
     const selectedTopic = app.getSelectedTopic();
     if (!selectedTopic) return;
     app.setMastery(selectedTopic.id, Number(event.target.value));
+    syncControlValues();
     app.renderAll();
   }
 
@@ -196,10 +250,38 @@
 
   function handlePointerUp(event) {
     if (!state.drag || event.pointerId !== state.drag.pointerId) return;
-    if (!state.drag.moved) state.selectedTopicId = state.drag.id;
-    else app.saveState();
+    if (!state.drag.moved) {
+      handleTopicSelection(state.drag.id);
+    } else {
+      app.saveState();
+      app.renderAll();
+    }
     state.drag = null;
-    app.renderAll();
+  }
+
+  function handleKeyboardShortcuts(event) {
+    const tag = document.activeElement && document.activeElement.tagName;
+    const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    if (!isTyping && event.key === '/') {
+      event.preventDefault();
+      state.elements.searchInput.focus();
+      return;
+    }
+    if (isTyping) return;
+    if (event.key.toLowerCase() === 'n') {
+      event.preventDefault();
+      openTopicDialog();
+      return;
+    }
+    if (event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      openDependencyDialog();
+      return;
+    }
+    if (event.key.toLowerCase() === 'f' && state.analysis && state.analysis.recommendation) {
+      event.preventDefault();
+      handleTopicSelection(state.analysis.recommendation.id);
+    }
   }
 
   function bindEvents() {
@@ -217,10 +299,22 @@
       state.elements.difficultyFilter.value = 'all';
       app.renderAll();
     });
+    state.elements.weeklyHoursInput.addEventListener('input', function (event) {
+      app.setWeeklyHours(Number(event.target.value));
+      syncControlValues();
+      app.renderAll();
+    });
+    state.elements.simulationSlider.addEventListener('input', function (event) {
+      app.setSimulationMastery(Number(event.target.value));
+      syncControlValues();
+      app.renderAll();
+    });
     state.elements.topicButton.addEventListener('click', function () { openTopicDialog(); });
     state.elements.dependencyButton.addEventListener('click', openDependencyDialog);
+    state.elements.importButton.addEventListener('click', function () { state.elements.importInput.click(); });
+    state.elements.importInput.addEventListener('change', handleImportChange);
     state.elements.exportButton.addEventListener('click', app.exportGraph);
-    state.elements.resetButton.addEventListener('click', function () { app.resetDemo(); app.renderAll(); });
+    state.elements.resetButton.addEventListener('click', function () { app.resetDemo(); syncControlValues(); app.renderAll(); });
     state.elements.closeTopicDialog.addEventListener('click', closeTopicDialog);
     state.elements.cancelTopicButton.addEventListener('click', closeTopicDialog);
     state.elements.closeDependencyDialog.addEventListener('click', closeDependencyDialog);
@@ -233,18 +327,21 @@
     state.elements.graphNodes.addEventListener('click', function (event) {
       const node = event.target.closest('.topic-node');
       if (!node || (state.drag && state.drag.moved)) return;
-      state.selectedTopicId = node.dataset.id;
-      app.renderAll();
+      handleTopicSelection(node.dataset.id);
     });
     state.elements.detailPanel.addEventListener('click', handleDetailClicks);
     state.elements.detailPanel.addEventListener('input', handleDetailInputs);
     state.elements.recommendationPanel.addEventListener('click', handlePanelTopicSelect);
     state.elements.queuePanel.addEventListener('click', handlePanelTopicSelect);
+    state.elements.simulationPanel.addEventListener('click', handlePanelTopicSelect);
+    state.elements.templatePanel.addEventListener('click', handleTemplateSelect);
+    state.elements.heroPanel.addEventListener('click', handleHeroClick);
+    window.addEventListener('keydown', handleKeyboardShortcuts);
   }
 
   cacheElements();
   app.loadState();
+  syncControlValues();
   bindEvents();
   app.renderAll();
 })();
-

@@ -18,6 +18,8 @@
         </div>
 
         <div class="topbar-actions">
+          <button class="ghost-button" id="import-button" type="button">Import JSON</button>
+          <input id="import-input" type="file" accept="application/json" hidden />
           <button class="ghost-button" id="export-button" type="button">Export JSON</button>
           <button class="ghost-button" id="reset-button" type="button">Reset Demo</button>
           <button class="primary-button" id="dependency-button" type="button">Add Dependency</button>
@@ -35,6 +37,13 @@
               <span class="field-label">Topic name or description</span>
               <input id="search-input" type="search" placeholder="Find recursion, arrays, ML..." />
             </label>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>Blueprints</span>
+            </div>
+            <div id="template-panel" class="template-grid"></div>
           </section>
 
           <section class="panel-card">
@@ -68,6 +77,20 @@
 
           <section class="panel-card">
             <div class="section-heading">
+              <span>Sprint Settings</span>
+            </div>
+            <div class="range-shell">
+              <div class="range-meta">
+                <span class="micro-copy">Weekly study hours</span>
+                <span class="range-value" id="weekly-hours-value">10h</span>
+              </div>
+              <input id="weekly-hours-input" type="range" min="4" max="24" step="1" value="10" />
+              <p class="helper-copy">The planner distributes the highest-value unlocked topics across a 5-day study sprint.</p>
+            </div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
               <span>Study Queue</span>
             </div>
             <div id="queue-panel" class="stack-list"></div>
@@ -88,6 +111,8 @@
         </aside>
 
         <section class="main-stage">
+                    <section id="hero-panel" class="hero-panel"></section>
+
           <section class="stats-grid" id="stats-grid"></section>
 
           <section class="canvas-panel">
@@ -99,6 +124,7 @@
               <div class="canvas-meta">
                 <span id="visible-count-badge" class="status-pill">0 visible</span>
                 <span class="status-pill subtle">Drag nodes to reorganize your map</span>
+                <span class="status-pill subtle">Shortcuts: / search, N topic, D dependency, F focus</span>
               </div>
             </div>
 
@@ -110,7 +136,7 @@
             </div>
           </section>
 
-          <section class="analytics-grid">
+          <section class="analytics-grid analytics-grid-wide">
             <article class="panel-card analytics-card">
               <div class="section-heading">
                 <span>Category Progress</span>
@@ -124,6 +150,13 @@
               </div>
               <div id="signals-panel" class="stack-list"></div>
             </article>
+
+            <article class="panel-card analytics-card">
+              <div class="section-heading">
+                <span>5-Day Sprint Planner</span>
+              </div>
+              <div id="sprint-panel" class="stack-list"></div>
+            </article>
           </section>
         </section>
 
@@ -133,6 +166,20 @@
               <span>Recommendation</span>
             </div>
             <div id="recommendation-panel" class="stack-list"></div>
+          </section>
+
+          <section class="panel-card">
+            <div class="section-heading">
+              <span>What-If Lab</span>
+            </div>
+            <div class="range-shell">
+              <div class="range-meta">
+                <span class="micro-copy">Projected mastery for selected topic</span>
+                <span class="range-value" id="simulation-value">0%</span>
+              </div>
+              <input id="simulation-slider" type="range" min="0" max="100" step="5" value="0" />
+            </div>
+            <div id="simulation-panel" class="stack-list"></div>
           </section>
 
           <section class="panel-card">
@@ -239,5 +286,12 @@
     <script src="./src/js/app.js"></script>
   </body>
 </html>
+
+
+
+
+
+
+
 
 
